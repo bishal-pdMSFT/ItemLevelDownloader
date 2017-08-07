@@ -1,7 +1,7 @@
 ﻿import * as models from "../Models"
 import * as Stream from "stream";
 
-export class FileShareProvider implements models.IArtifactProvider {
+export class FileShareProvider implements models.ISourceArtifactProvider {
     constructor(droplocation: string) {
         this._droplocation = droplocation;
     }
@@ -9,7 +9,7 @@ export class FileShareProvider implements models.IArtifactProvider {
     getRootItems(): Promise<models.ArtifactItem[]> {
         throw new Error("Method not implemented.");
     }
-    
+
     getArtifactItems(): Promise<models.ArtifactItem[]> {
         throw new Error("Not implemented");
     }

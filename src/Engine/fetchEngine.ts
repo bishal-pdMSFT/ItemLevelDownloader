@@ -8,15 +8,13 @@ import { ArtifactItemStore } from '../Store/artifactItemStore';
 import { FetchEngineOptions } from "./fetchEngineOptions"
 
 export class FetchEngine {
-    async fetchItems(artifactProvider: models.IArtifactProvider, targetPath: string, fetchEngineOptions: FetchEngineOptions): Promise<void> {
-        const downloaders: Promise<{}>[] = [];
-        const createdFolders: { [key: string]: boolean } = {};
-
-        const itemsToDownload: models.ArtifactItem[] = await artifactProvider.getRootItems();
-        this.artifactStore.addItems(itemsToDownload);
+    async processItems(sourceProvider: models.ISourceArtifactProvider, destProvider: models.IDestinationArtifactProvider, fetchEngineOptions: FetchEngineOptions): Promise<void> {
+        const processors: Promise<{}>[] = [];
+        const itemsToPull: models.ArtifactItem[] = await sourceProvider.getRootItems();
+        this.artifactStore.addItems(itemsToPull);
 
         for (let i = 0; i < fetchEngineOptions.parallelDownloadLimit; ++i) {
-            downloaders.push(new Promise(async (resolve, reject) => {
+            processors.push(new Promise(async (resolve, reject) => {
                 try {
                     while (true) {
                         const item = this.artifactStore.getNextItemToProcess();
@@ -24,19 +22,8 @@ export class FetchEngine {
                             break;
                         }
 
-                        console.log("Dequeued item " + item.path + " to download queue for processing.");
-                        const outputFilename = path.join(targetPath, item.path);
-                        const folder = path.dirname(outputFilename);
-                        this.ensureDirectoryExistence(folder);
-
-                        if (!createdFolders.hasOwnProperty(folder)) {
-                            if (!fs.existsSync(folder)) {
-                                fs.mkdir(folder);
-                            }
-                            createdFolders[folder] = true;
-                        }
-
-                        await this.downloadArtifactItem(artifactProvider, item, outputFilename, fetchEngineOptions.downloadPattern, fetchEngineOptions.retryLimit);
+                        console.log("Dequeued item " + item.path + " for processing.");
+                        await this.processArtifactItem(sourceProvider, item, destProvider, fetchEngineOptions.downloadPattern, fetchEngineOptions.retryLimit);
                     }
 
                     console.log("Exiting worker nothing more to process");
@@ -49,38 +36,34 @@ export class FetchEngine {
             }));
         }
 
-        await Promise.all(downloaders);
+        await Promise.all(processors);
     }
 
-    downloadArtifactItem(artifactProvider: models.IArtifactProvider,
+    processArtifactItem(sourceProvider: models.ISourceArtifactProvider,
         item: models.ArtifactItem,
-        outputFilename: string,
-        downloadPattern: string,
+        destProvider: models.IDestinationArtifactProvider,
+        filePattern: string,
         retryLimit: number,
         retryCount?: number): Promise<{}> {
-        return new Promise(async (downloadResolve, downloadReject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 retryCount = retryCount ? retryCount : 0;
                 if (item.itemType === models.ItemType.File) {
-                    if (minimatch(item.path, downloadPattern)) {
-                        console.log("Downloading '%s' to '%s' (file %d of %d)", item.path, outputFilename);
-                        const contentStream = await artifactProvider.getArtifactItem(item);
-                        const outputStream = fs.createWriteStream(outputFilename);
-
-                        contentStream.pipe(outputStream);
-                        contentStream.on("end",
-                            () => {
-                                console.log(`Downloaded '${item.path}' to '${outputFilename}'`);
-                                downloadResolve();
-                            });
+                    if (minimatch(item.path, filePattern)) {
+                        console.log("Processing '%s' (file %d of %d)", item.path);
+                        const contentStream = await sourceProvider.getArtifactItem(item);
+                        console.log("got read stream for item: " + item.path);
+                        var movedItem = await destProvider.putArtifactItem(item, contentStream);
+                        console.log("moved item to uri: " + movedItem.metadata["downloadUrl"]);
+                        resolve();
                     }
                     else {
-                        console.log("Skipping download of file " + item.path);
-                        downloadResolve();
+                        console.log("Skipping processing of item " + item.path);
+                        resolve();
                     }
                 }
                 else {
-                    var items = await artifactProvider.getArtifactItems(item);
+                    var items = await sourceProvider.getArtifactItems(item);
                     items = items.map((value, index) => {
                         if(!value.path.startsWith(item.path)){
                             value.path = path.join(item.path, value.path);
@@ -91,29 +74,19 @@ export class FetchEngine {
 
                     this.artifactStore.addItems(items);
 
-                    console.log("Enqueued " + items.length + " to download queue for processing.");
-                    downloadResolve();
+                    console.log("Enqueued " + items.length + " for processing.");
+                    resolve();
                 }
             } catch (err) {
-                console.log("Error downloading file %s: %s", item.path, err);
+                console.log("Error processing file %s: %s", item.path, err);
                 if (retryCount === retryLimit - 1) {
-                    downloadReject(err);
+                    reject(err);
                 } else {
                     process.nextTick(() => this
-                        .downloadArtifactItem(artifactProvider, item, outputFilename, downloadPattern, retryLimit, retryCount + 1));
+                        .processArtifactItem(sourceProvider, item, destProvider, filePattern, retryLimit, retryCount + 1));
                 }
             }
         });
     }
-
-    private ensureDirectoryExistence(filePath) {
-        var dirname = path.dirname(filePath);
-        if (fs.existsSync(dirname)) {
-            return true;
-        }
-        this.ensureDirectoryExistence(dirname);
-        fs.mkdirSync(dirname);
-    }
-
     private artifactStore: ArtifactItemStore = new ArtifactItemStore();
 }

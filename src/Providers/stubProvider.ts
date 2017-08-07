@@ -3,7 +3,7 @@
 import * as models from '../Models';
 import { ItemType } from '../Models';
 
-export class StubProvider implements models.IArtifactProvider {
+export class StubProvider implements models.ISourceArtifactProvider {
 
     public getArtifactItemCalledCount = 0;
     public getArtifactItemsCalledCount = 0;
@@ -21,7 +21,7 @@ export class StubProvider implements models.IArtifactProvider {
         this.getArtifactItemsCalledCount++;
 
         if(artifactItem.path === 'path5'){
-            return [this.getItem(5, 2, ItemType.File)];    
+            return [this.getItem(5, 2, ItemType.File)];
         }
 
         return [];

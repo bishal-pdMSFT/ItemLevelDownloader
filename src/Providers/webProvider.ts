@@ -9,7 +9,7 @@ var handlebars = require('handlebars');
 
 import * as models from '../Models';
 
-export class WebProvider implements models.IArtifactProvider {
+export class WebProvider implements models.ISourceArtifactProvider {
 
     constructor(rootItemsLocation, templateFile: string, username: string, password: string, variables: any) {
         this._rootItemsLocation = rootItemsLocation;
@@ -55,7 +55,7 @@ export class WebProvider implements models.IArtifactProvider {
                             console.log(err);
                             reject(err);
                         }
-                        
+
                         var template = handlebars.compile(data);
                         var response = JSON.parse(body);
                         var context = this.extend({}, response, this._variables)
