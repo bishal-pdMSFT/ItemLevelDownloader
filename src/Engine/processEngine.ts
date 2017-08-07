@@ -5,15 +5,15 @@ var minimatch = require('minimatch');
 
 import * as models from '../Models';
 import { ArtifactItemStore } from '../Store/artifactItemStore';
-import { FetchEngineOptions } from "./fetchEngineOptions"
+import { ProcessEngineOptions } from "./processEngineOptions"
 
-export class FetchEngine {
-    async processItems(sourceProvider: models.ISourceArtifactProvider, destProvider: models.IDestinationArtifactProvider, fetchEngineOptions: FetchEngineOptions): Promise<void> {
+export class ProcessEngine {
+    async processItems(sourceProvider: models.ISourceArtifactProvider, destProvider: models.IDestinationArtifactProvider, processEngineOptions: ProcessEngineOptions): Promise<void> {
         const processors: Promise<{}>[] = [];
         const itemsToPull: models.ArtifactItem[] = await sourceProvider.getRootItems();
         this.artifactStore.addItems(itemsToPull);
 
-        for (let i = 0; i < fetchEngineOptions.parallelDownloadLimit; ++i) {
+        for (let i = 0; i < processEngineOptions.parallelProcessingLimit; ++i) {
             processors.push(new Promise(async (resolve, reject) => {
                 try {
                     while (true) {
@@ -23,11 +23,10 @@ export class FetchEngine {
                         }
 
                         console.log("Dequeued item " + item.path + " for processing.");
-                        await this.processArtifactItem(sourceProvider, item, destProvider, fetchEngineOptions.downloadPattern, fetchEngineOptions.retryLimit);
+                        await this.processArtifactItem(sourceProvider, item, destProvider, processEngineOptions.filePattern, processEngineOptions.retryLimit);
                     }
 
                     console.log("Exiting worker nothing more to process");
-
                     resolve();
                 }
                 catch (err) {

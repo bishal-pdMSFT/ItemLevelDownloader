@@ -3,14 +3,14 @@ import * as engine from "./Engine"
 import * as providers from "./Providers"
 
 async function main(): Promise<void> {
-    let downloader = new engine.FetchEngine();
+    let processor = new engine.ProcessEngine();
 
-    let downloaderOptions = new engine.FetchEngineOptions();
-    downloaderOptions.downloadFileTimeoutInMinutes = 5;
-    downloaderOptions.downloadPattern = "**";
-    downloaderOptions.parallelDownloadLimit = 4;
-    downloaderOptions.retryIntervalInSeconds = 3;
-    downloaderOptions.retryLimit = 2;
+    let options = new engine.ProcessEngineOptions();
+    options.ProcessFileTimeoutInMinutes = 5;
+    options.filePattern = "**";
+    options.parallelProcessingLimit = 4;
+    options.retryIntervalInSeconds = 3;
+    options.retryLimit = 2;
 
     var itemsUrl = "http://redvstt-lab43:8080/job/AngoyaJob/8/api/json?tree=artifacts[*]"
     var variables = {
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
     var localFileProvider2 = new providers.LocalFilesystemProvider("C:\\work\\VMSS\\ild4")
     var blobProvider = new providers.AzureBlobProvider("bishalpackerimages", "parallel", "oxCuLt64HbrEH7XYol6ho/noLhsiVPPB1UrrXaQ+Ytah7sVYOMAdK96QgiAuN3nK4KfFJavAtqr1EvqYjfvgFA==")
 
-    await downloader.processItems(localFileProvider, blobProvider, downloaderOptions);
+    await processor.processItems(localFileProvider, blobProvider, options);
 }
 
 main();
