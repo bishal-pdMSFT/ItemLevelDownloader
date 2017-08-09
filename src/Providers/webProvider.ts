@@ -9,7 +9,7 @@ var handlebars = require('handlebars');
 
 import * as models from '../Models';
 
-export class WebProvider implements models.ISourceArtifactProvider {
+export class WebProvider implements models.IArtifactProvider {
 
     constructor(rootItemsLocation, templateFile: string, username: string, password: string, variables: any) {
         this._rootItemsLocation = rootItemsLocation;
@@ -37,6 +37,10 @@ export class WebProvider implements models.ISourceArtifactProvider {
         });
 
         return promise;
+    }
+
+    putArtifactItem(item: models.ArtifactItem, readStream: stream.Readable): Promise<models.ArtifactItem> {
+        throw new Error("Not implemented");
     }
 
     private getItems(itemsUrl: string): Promise<models.ArtifactItem[]> {

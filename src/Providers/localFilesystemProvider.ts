@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as models from "../Models"
 import * as Stream from "stream";
 
-export class LocalFilesystemProvider implements models.IDestinationArtifactProvider {
+export class LocalFilesystemProvider implements models.IArtifactProvider {
     constructor(rootLocation: string) {
         this._rootLocation = rootLocation;
     }
@@ -33,6 +33,7 @@ export class LocalFilesystemProvider implements models.IDestinationArtifactProvi
 
     public putArtifactItem(item: models.ArtifactItem, stream: Stream.Readable): Promise<models.ArtifactItem> {
         return new Promise(async (resolve, reject) => {
+            var newArtifactItem: models.ArtifactItem = models.ArtifactItem.clone(item);
             const outputFilename = path.join(this._rootLocation, item.path);
 
             // create parent folder if it has not already been created
@@ -45,8 +46,8 @@ export class LocalFilesystemProvider implements models.IDestinationArtifactProvi
             stream.on("end",
                 () => {
                     console.log(`Downloaded '${item.path}' to '${outputFilename}'`);
-                    item.metadata["downloadUrl"] = outputFilename;
-                    resolve(item);
+                    newArtifactItem.metadata["downloadUrl"] = outputFilename;
+                    resolve(newArtifactItem);
                 });
             stream.on("error",
                 (error) => {
@@ -60,7 +61,7 @@ export class LocalFilesystemProvider implements models.IDestinationArtifactProvi
             var items: models.ArtifactItem[] = [];
             fs.readdir(itemsPath, (error, files) => {
                 if(!!error) {
-                    console.log("Unable to read diretory " + itemsPath + ". Error: " + error);
+                    console.log("Unable to read directory " + itemsPath + ". Error: " + error);
                 }
 
                 for (var index = 0; index < files.length; index++) {
@@ -70,15 +71,11 @@ export class LocalFilesystemProvider implements models.IDestinationArtifactProvi
                     // do not follow symbolic link
                     var itemStat = fs.lstatSync(filePath)
                     var item: models.ArtifactItem = <models.ArtifactItem>{
-                        itemType: models.ItemType.Folder,
-                        path: parentRelativePath ? parentRelativePath + path.sep + file : file,
+                        itemType: itemStat.isFile() ? models.ItemType.File : models.ItemType.Folder,
+                        path: parentRelativePath ? path.join(parentRelativePath, file) : file,
                         fileLength: itemStat.size,
                         lastModified: itemStat.mtime,
                         metadata: { "downloadUrl": filePath }
-                    }
-
-                    if(itemStat.isFile()) {
-                        item.itemType = models.ItemType.File;
                     }
 
                     items = items.concat(item);
@@ -93,9 +90,13 @@ export class LocalFilesystemProvider implements models.IDestinationArtifactProvi
 
     private ensureDirectoryExistence(folder) {
         if (!this._createdFolders.hasOwnProperty(folder)) {
-            if (!fs.existsSync(folder)) {
-                fs.mkdirSync(folder);
+            var dirName: string = path.dirname(folder);
+            if (fs.existsSync(folder)) {
+                return;
             }
+
+            this.ensureDirectoryExistence(dirName);
+            fs.mkdirSync(folder);
             this._createdFolders[folder] = true;
         }
     }

@@ -3,7 +3,7 @@
 import * as models from '../Models';
 import { ItemType } from '../Models';
 
-export class StubProvider implements models.ISourceArtifactProvider {
+export class StubProvider implements models.IArtifactProvider {
 
     public getArtifactItemCalledCount = 0;
     public getArtifactItemsCalledCount = 0;
@@ -49,8 +49,13 @@ export class StubProvider implements models.ISourceArtifactProvider {
         artifactItem.path = path;
         artifactItem.fileLength = length;
         artifactItem.itemType = itemType;
+        artifactItem.metadata = {};
 
         return artifactItem;
+    }
+
+    putArtifactItem(item: models.ArtifactItem, readStream: Stream.Readable): Promise<models.ArtifactItem> {
+        throw new Error("Not implemented");
     }
 
     delay(ms: number): Promise<{}> {

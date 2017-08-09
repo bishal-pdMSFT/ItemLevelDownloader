@@ -5,15 +5,16 @@ var minimatch = require('minimatch');
 
 import * as models from '../Models';
 import { ArtifactItemStore } from '../Store/artifactItemStore';
-import { ProcessEngineOptions } from "./processEngineOptions"
+import { ArtifactEngineOptions } from "./artifactEngineOptions"
 
-export class ProcessEngine {
-    async processItems(sourceProvider: models.ISourceArtifactProvider, destProvider: models.IDestinationArtifactProvider, processEngineOptions: ProcessEngineOptions): Promise<void> {
+export class ArtifactEngine {
+    async processItems(sourceProvider: models.IArtifactProvider, destProvider: models.IArtifactProvider, artifactEngineOptions?: ArtifactEngineOptions): Promise<void> {
         const processors: Promise<{}>[] = [];
+        artifactEngineOptions = artifactEngineOptions || new ArtifactEngineOptions();
         const itemsToPull: models.ArtifactItem[] = await sourceProvider.getRootItems();
         this.artifactStore.addItems(itemsToPull);
 
-        for (let i = 0; i < processEngineOptions.parallelProcessingLimit; ++i) {
+        for (let i = 0; i < artifactEngineOptions.parallelProcessingLimit; ++i) {
             processors.push(new Promise(async (resolve, reject) => {
                 try {
                     while (true) {
@@ -23,7 +24,7 @@ export class ProcessEngine {
                         }
 
                         console.log("Dequeued item " + item.path + " for processing.");
-                        await this.processArtifactItem(sourceProvider, item, destProvider, processEngineOptions.filePattern, processEngineOptions.retryLimit);
+                        await this.processArtifactItem(sourceProvider, item, destProvider, artifactEngineOptions.filePattern, artifactEngineOptions.retryLimit);
                     }
 
                     console.log("Exiting worker nothing more to process");
@@ -38,9 +39,9 @@ export class ProcessEngine {
         await Promise.all(processors);
     }
 
-    processArtifactItem(sourceProvider: models.ISourceArtifactProvider,
+    processArtifactItem(sourceProvider: models.IArtifactProvider,
         item: models.ArtifactItem,
-        destProvider: models.IDestinationArtifactProvider,
+        destProvider: models.IArtifactProvider,
         filePattern: string,
         retryLimit: number,
         retryCount?: number): Promise<{}> {
@@ -52,8 +53,7 @@ export class ProcessEngine {
                         console.log("Processing '%s' (file %d of %d)", item.path);
                         const contentStream = await sourceProvider.getArtifactItem(item);
                         console.log("got read stream for item: " + item.path);
-                        var movedItem = await destProvider.putArtifactItem(item, contentStream);
-                        console.log("moved item to uri: " + movedItem.metadata["downloadUrl"]);
+                        await destProvider.putArtifactItem(item, contentStream);
                         resolve();
                     }
                     else {

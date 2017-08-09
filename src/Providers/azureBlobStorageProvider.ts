@@ -4,7 +4,7 @@ import * as azureStorage from 'azure-storage';
 import * as models from "../Models"
 import * as Stream from "stream";
 
-export class AzureBlobProvider implements models.IDestinationArtifactProvider {
+export class AzureBlobProvider implements models.IArtifactProvider {
     constructor(storageAccount: string, container: string, accessKey: string) {
         this._storageAccount = storageAccount;
         this._accessKey = accessKey;
@@ -14,6 +14,7 @@ export class AzureBlobProvider implements models.IDestinationArtifactProvider {
 
     public putArtifactItem(item: models.ArtifactItem, readStream: Stream.Readable): Promise<models.ArtifactItem> {
         return new Promise(async (resolve, reject) => {
+            var newArtifactItem: models.ArtifactItem = models.ArtifactItem.clone(item);
             // ensure container is already created
             await this._ensureContainerExistence();
 
@@ -24,10 +25,10 @@ export class AzureBlobProvider implements models.IDestinationArtifactProvider {
                     console.log("Failed to create blob " + item.path + ". Error: " + error.message);
                     reject(error);
                 } else {
-                    console.log("Created blob for item " + item.path);
                     var blobUrl = self._blobSvc.getUrl(self._container, item.path);
-                    item.metadata["downloadUrl"] = blobUrl;
-                    resolve(item);
+                    console.log("Created blob for item " + item.path + ". Blob uri: " + blobUrl);
+                    newArtifactItem.metadata["downloadUrl"] = blobUrl;
+                    resolve(newArtifactItem);
                 }
             });
 
@@ -43,6 +44,18 @@ export class AzureBlobProvider implements models.IDestinationArtifactProvider {
         });
     }
 
+    public getRootItems(): Promise<models.ArtifactItem[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    public getArtifactItems(): Promise<models.ArtifactItem[]> {
+        throw new Error("Not implemented");
+    }
+
+    public getArtifactItem(artifactItem: models.ArtifactItem): Promise<Stream.Readable> {
+        throw new Error("Not implemented");
+    }
+
     private _ensureContainerExistence(): Promise<void> {
         return new Promise(async (resolve, reject) => {
             if(!this._isContainerExists) {
@@ -52,14 +65,12 @@ export class AzureBlobProvider implements models.IDestinationArtifactProvider {
                         console.log("Failed to create container " + self._container + ". Error: " + error.message);
                         reject(error);
                     } else {
-
-                    self._isContainerExists = true;
-                    console.log("Created container " + self._container);
-                    resolve();
+                        self._isContainerExists = true;
+                        console.log("Created container " + self._container);
+                        resolve();
                     }
                 });
             } else {
-
             resolve();
             }
         });
