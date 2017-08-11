@@ -12,7 +12,15 @@
             "program": "${workspaceRoot}\\src\\task.js",
             "outFiles": [
                 "${workspaceRoot}/out/**/*.js"
-            ]
+            ],
+            "env": {
+                "NODE_ENV": "production",
+                "JENKINS_USER": "admin",
+                "JENKINS_PASSWORD": "jenkins123",
+                "TEAMCITY_USER": "panditaomesh",
+                "TEAMCITY_PASSWORD": "12345",
+                "AZURE_STORAGE_KEY": "oxCuLt64HbrEH7XYol6ho/noLhsiVPPB1UrrXaQ+Ytah7sVYOMAdK96QgiAuN3nK4KfFJavAtqr1EvqYjfvgFA=="
+            }
         },
         {
             "name": "Run mocha",
@@ -22,7 +30,9 @@
             "stopOnEntry": false,
             "args": ["src/**/*Tests.js"],
             "runtimeExecutable": null,
-            "env": { "NODE_ENV": "production"}
+            "env": {
+                "NODE_ENV": "production"
+            }
         }
     ]
 }

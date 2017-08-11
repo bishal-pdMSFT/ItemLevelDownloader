@@ -1,6 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
+
 import * as azureStorage from 'azure-storage';
+
 import * as models from "../Models"
 import * as Stream from "stream";
 
@@ -15,7 +17,6 @@ export class AzureBlobProvider implements models.IArtifactProvider {
     public putArtifactItem(item: models.ArtifactItem, readStream: Stream.Readable): Promise<models.ArtifactItem> {
         return new Promise(async (resolve, reject) => {
             var newArtifactItem: models.ArtifactItem = models.ArtifactItem.clone(item);
-            // ensure container is already created
             await this._ensureContainerExistence();
 
             var self = this;

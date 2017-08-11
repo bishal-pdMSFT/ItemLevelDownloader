@@ -5,7 +5,7 @@ import * as engine from "../Engine"
 import * as models from "../Models"
 import * as providers from "../Providers"
 
-describe('artifactEnfine.fetchItems', () => {
+describe('artifactEngine.fetchItems', () => {
     it('should call getRootItemsCalledCount for the given artifact provider', async () => {
         var testProvider = new providers.StubProvider();
         var localFileProvider = new providers.LocalFilesystemProvider("c:\\drop");
@@ -15,7 +15,7 @@ describe('artifactEnfine.fetchItems', () => {
     });
 });
 
-describe('artifactEnfine.fetchItems', () => {
+describe('artifactEngine.fetchItems', () => {
     it('should call getArtifactItem for all artifact items', async () => {
         var testProvider = new providers.StubProvider();
 
@@ -26,7 +26,7 @@ describe('artifactEnfine.fetchItems', () => {
     });
 });
 
-describe('artifactEnfine.fetchItems', () => {
+describe('artifactEngine.fetchItems', () => {
     it('should call getArtifactItems for all artifact items of type folder', async () => {
         var testProvider = new providers.StubProvider();
 
@@ -37,7 +37,7 @@ describe('artifactEnfine.fetchItems', () => {
     });
 });
 
-describe('artifactEnfine.fetchItems', () => {
+describe('artifactEngine.fetchItems', () => {
     it('should call getArtifactItem only for artifact that match the download pattern', async () => {
         var testProvider = new providers.StubProvider();
         var downloadOptions = new engine.ArtifactEngineOptions();

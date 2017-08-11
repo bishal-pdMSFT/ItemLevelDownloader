@@ -1,2 +1,2 @@
-﻿export { ArtifactEngineOptions } from "./ArtifactEngineOptions";
-export { ArtifactEngine } from "./ArtifactEngine";
+﻿export { ArtifactEngineOptions } from "./artifactEngineOptions";
+export { ArtifactEngine } from "./artifactEngine";

@@ -11,6 +11,8 @@ export class ArtifactEngine {
     async processItems(sourceProvider: models.IArtifactProvider, destProvider: models.IArtifactProvider, artifactEngineOptions?: ArtifactEngineOptions): Promise<void> {
         const processors: Promise<{}>[] = [];
         artifactEngineOptions = artifactEngineOptions || new ArtifactEngineOptions();
+        this.artifactStore.flush();
+
         const itemsToPull: models.ArtifactItem[] = await sourceProvider.getRootItems();
         this.artifactStore.addItems(itemsToPull);
 

@@ -6,7 +6,7 @@ async function main(): Promise<void> {
     let processor = new engine.ArtifactEngine();
 
     let options = new engine.ArtifactEngineOptions();
-    options.FileProcessingTimeoutInMinutes = 5;
+    options.fileProcessingTimeoutInMinutes = 5;
     options.filePattern = "**";
     options.parallelProcessingLimit = 4;
     options.retryIntervalInSeconds = 3;
